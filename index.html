@@ -83,7 +83,6 @@
     gap: 16px;
   }
 
-  /* LEFT — Game */
   .game-section {
     display: flex;
     flex-direction: column;
@@ -128,7 +127,6 @@
     margin-top: 2px;
   }
 
-  /* MIDDLE — Training Stats */
   .stats-section {
     flex: 1;
     display: flex;
@@ -210,7 +208,6 @@
 
   .q-val { width: 40px; text-align: right; color: #aaa; }
 
-  /* RIGHT — How it works */
   .info-section {
     width: 220px;
     display: flex;
@@ -281,7 +278,6 @@
 </header>
 
 <main>
-  <!-- LEFT: Game Board -->
   <div class="game-section">
     <canvas id="gameCanvas" width="200" height="400"></canvas>
     <div class="game-stats">
@@ -296,7 +292,6 @@
     </div>
   </div>
 
-  <!-- MIDDLE: Live AI Stats -->
   <div class="stats-section">
 
     <div class="panel">
@@ -336,7 +331,6 @@
 
   </div>
 
-  <!-- RIGHT: How It Works -->
   <div class="info-section">
 
     <div class="panel">
@@ -380,9 +374,6 @@
 </main>
 
 <script>
-// ============================================================
-// TETRIS ENGINE
-// ============================================================
 const COLS = 10, ROWS = 20, BLOCK = 20;
 const COLORS = ['#F54E00','#3b82f6','#4ade80','#facc15','#a78bfa','#fb7185','#22d3ee'];
 
@@ -469,7 +460,6 @@ function draw() {
       ctx.strokeRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
     }
 
-  // Board
   board.forEach((row, r) =>
     row.forEach((color, c) => {
       if (color) {
@@ -481,7 +471,6 @@ function draw() {
     })
   );
 
-  // Current piece
   if (currentPiece && !gameOver) {
     ctx.fillStyle = currentPiece.color;
     currentPiece.shape.forEach((row, r) =>
@@ -498,7 +487,6 @@ function draw() {
     );
   }
 
-  // Game over overlay
   if (gameOver) {
     ctx.fillStyle = 'rgba(0,0,0,0.75)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -515,9 +503,6 @@ function draw() {
   document.getElementById('linesVal').textContent = lines;
 }
 
-// ============================================================
-// STATE FOR AI (mirrors Python environment)
-// ============================================================
 function getHeights() {
   return Array.from({length: COLS}, (_, c) => {
     for (let r = 0; r < ROWS; r++)
@@ -554,15 +539,11 @@ function getState() {
   return [...heights, holes, bumpiness, maxH, avgH, lines];
 }
 
-// ============================================================
-// AI MODEL — load weights from JSON and run inference
-// ============================================================
 async function loadModel() {
   try {
     const resp = await fetch('./model_weights.json');
     const weights = await resp.json();
 
-    // Rebuild network: 15 → 256 → 256 → 128 → 4
     const w0 = tf.tensor2d(weights['network.0.weight']).transpose();
     const b0 = tf.tensor1d(weights['network.0.bias']);
     const w2 = tf.tensor2d(weights['network.2.weight']).transpose();
@@ -609,9 +590,6 @@ function updateQDisplay(qvals) {
   });
 }
 
-// ============================================================
-// GAME LOOP
-// ============================================================
 function gravity() {
   if (gameOver) return;
   if (isValid(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) {
@@ -654,9 +632,6 @@ function aiStep() {
   gravity();
 }
 
-// ============================================================
-// TRAINING CHART
-// ============================================================
 function drawChart(data) {
   const c = document.getElementById('chartCanvas');
   const cx = c.getContext('2d');
@@ -670,13 +645,11 @@ function drawChart(data) {
   const max = Math.max(...data, 1);
   const step = w / data.length;
 
-  // Moving average
   const avg = data.map((_, i) => {
     const window = data.slice(Math.max(0, i-49), i+1);
     return window.reduce((a,b) => a+b, 0) / window.length;
   });
 
-  // Raw scores
   cx.beginPath();
   cx.strokeStyle = 'rgba(245,78,0,0.3)';
   cx.lineWidth = 1;
@@ -687,7 +660,6 @@ function drawChart(data) {
   });
   cx.stroke();
 
-  // Average line
   cx.beginPath();
   cx.strokeStyle = '#F54E00';
   cx.lineWidth = 2;
@@ -698,7 +670,6 @@ function drawChart(data) {
   });
   cx.stroke();
 
-  // Labels
   cx.fillStyle = '#555';
   cx.font = '9px Segoe UI';
   cx.fillText('Score', 4, 12);
@@ -707,9 +678,6 @@ function drawChart(data) {
   cx.fillText('1000', w - 4, h - 4);
 }
 
-// ============================================================
-// CONTROLS
-// ============================================================
 function setMode(m) {
   mode = m;
   clearInterval(aiInterval);
@@ -748,11 +716,7 @@ document.addEventListener('keydown', e => {
   draw();
 });
 
-// ============================================================
-// INIT
-// ============================================================
 async function init() {
-  // Load training stats for chart
   try {
     const resp = await fetch('./training_stats.json');
     statsData = await resp.json();
@@ -762,10 +726,8 @@ async function init() {
     console.warn('Could not load training_stats.json');
   }
 
-  // Load model
   await loadModel();
 
-  // Start game
   resetGame();
 }
 
